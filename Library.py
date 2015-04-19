@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 
-#import cgi
-import sort
 from hurry.filesize import size
 from subprocess import call
 from gi.repository import Gtk
 from os import listdir, path, system, getcwd, getenv
 from gi.repository import Gdk
-import PyPDF2
+#import PyPDF2
 import sqlite3 as lite
 import threading
 from ConfigParser import SafeConfigParser
@@ -31,7 +29,7 @@ class LibraryApp:
 
     def initUI(self):
         self.builder = Gtk.Builder()
-        self.builder.add_from_file(path.join(self.appdir, 'main.glade'))
+        self.builder.add_from_file(path.join(self.appdir, 'Biblioteca.ui'))
         parser = SafeConfigParser()
         parser.read(path.join(self.appdir,'config.ini'))
         colwidths = parser.get('ui','colwidths').split(',')
@@ -72,9 +70,10 @@ class LibraryApp:
     def filter_all(self, model, eter, data):
         collist = [(0,), (7,), (2,), (1,), (0,1,2,4,6,7)]
         row = model.get(eter, *collist[self.modstate])
-        data = self.widgets['searchbox'].get_text().lower()
+        data = self.widgets['searchbox'].get_text().lower() if self.widgets['searchbox'].get_text() != None else ''
+        print row
         for a in row:
-            if data in a.lower():
+            if a is not None and data in a.lower():
                 return True
         else:
             return False
