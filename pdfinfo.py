@@ -4,7 +4,7 @@ from os import listdir, path
 
 def toDict(string):
     temp = string.split(':')
-    return (temp[0],temp[1])
+    return (temp[0],temp[1].strip())
 
 def getFileInfo(filename):
     info = Popen('pdfinfo "' + filename + '"', shell=True, stdout=PIPE).stdout.read().splitlines()

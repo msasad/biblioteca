@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from pdfinfo import getFileInfo
 from hurry.filesize import size
 from subprocess import call
 from gi.repository import Gtk
@@ -10,8 +11,9 @@ import sqlite3 as lite
 import threading
 from ConfigParser import SafeConfigParser
 
-class LibraryApp:
+class LibraryApp(Gtk.Application):
     def __init__(self):
+        Gtk.Application.__init__(self)
         appdir = path.realpath(__file__)
         self.appdir = appdir.rstrip(path.basename(appdir))
         self.modstate = 4
@@ -30,6 +32,7 @@ class LibraryApp:
     def initUI(self):
         self.builder = Gtk.Builder()
         self.builder.add_from_file(path.join(self.appdir, 'Biblioteca.ui'))
+        #self.set_menubar(None)
         parser = SafeConfigParser()
         parser.read(path.join(self.appdir,'config.ini'))
         colwidths = parser.get('ui','colwidths').split(',')
@@ -44,7 +47,7 @@ class LibraryApp:
         self.widgets['tree']        = self.builder.get_object('treeview2')
         self.widgets['filechooser'] = self.builder.get_object('filechooserdialog1')
         self.widgets['filechooser'].set_action(Gtk.FileChooserAction.SELECT_FOLDER)
-        mnuquit = self.builder.get_object('mnuquit')
+        #mnuquit = self.builder.get_object('mnuquit')
  
         self.modelfilter = self.liststore.filter_new()
         btnopen = self.builder.get_object('tbtnopen')        
@@ -54,7 +57,7 @@ class LibraryApp:
         
         #connect handlers
         btnopen.connect('clicked', self.showfilechooser)
-        mnuquit.connect('activate', Gtk.main_quit)
+        #mnuquit.connect('activate', Gtk.main_quit)
         self.widgets['tree'].connect("row-activated", self.tree_dblclick)
         self.widgets['window'].connect('destroy', Gtk.main_quit)
         self.widgets['searchbox'].connect("changed", self.do_filter_all)
@@ -63,7 +66,6 @@ class LibraryApp:
         self.widgets['window'].show_all()
 
     def do_clear(self, entry, position, event):
-        print position
         if position == position.SECONDARY:
             entry.set_text('')
 
@@ -71,7 +73,6 @@ class LibraryApp:
         collist = [(0,), (7,), (2,), (1,), (0,1,2,4,6,7)]
         row = model.get(eter, *collist[self.modstate])
         data = self.widgets['searchbox'].get_text().lower() if self.widgets['searchbox'].get_text() != None else ''
-        print row
         for a in row:
             if a is not None and data in a.lower():
                 return True
@@ -151,8 +152,12 @@ class LibraryApp:
             filepath = path.join(fpath, f)
             sizeinbytes = path.getsize(filepath)
             filesize = size(sizeinbytes)
-            pdf = PyPDF2.PdfFileReader(open(filepath, 'rb'))
-            templist = [pdf.documentInfo.title, f, pdf.documentInfo.author, pdf.numPages, filepath, filesize, None, None, 0, sizeinbytes]
+            #pdf = PyPDF2.PdfFileReader(open(filepath, 'rb'))
+            info = getFileInfo(filepath)
+            #templist = [pdf.documentInfo.title, f, pdf.documentInfo.author, pdf.numPages, filepath, filesize, None, None, 0, sizeinbytes]
+            templist = [info.get('Title',''), f, info.get('Author',''), int(info['Pages']), filepath, filesize, None, None, 0, sizeinbytes]
+            #print templist
+            templist = [unicode(a) if type(a)=='str' else a for a in templist]
             self.liststore.append(templist)
             cmd = unicode("insert into catalog values('{0}','{1}','{2}',{3},'{4}','{5}','{6}','{7}',{8}, {9})") .format(*tuple(i if i != None else '' for i in templist))
             try:
