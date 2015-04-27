@@ -1,12 +1,9 @@
 #!/usr/bin/env python
 
-from pdfinfo import getFileInfo
-from hurry.filesize import size
+from scanner import scanFiles, FT
 from subprocess import call
-from gi.repository import Gtk
+from gi.repository import Gtk, Gdk
 from os import listdir, path, system, getcwd, getenv
-from gi.repository import Gdk
-#import PyPDF2
 import sqlite3 as lite
 import threading
 from ConfigParser import SafeConfigParser
@@ -21,18 +18,9 @@ class LibraryApp(Gtk.Application):
         self.initDB()
         Gtk.main()
 
-    class scanfiles(threading.Thread):
-        def __init__(self, app, fpath):
-            threading.Thread.__init__(self)
-            self.a = app
-            self.fpath = fpath
-        def run(self):
-            self.a.findfiles(self.fpath)
-
     def initUI(self):
         self.builder = Gtk.Builder()
         self.builder.add_from_file(path.join(self.appdir, 'Biblioteca.ui'))
-        #self.set_menubar(None)
         parser = SafeConfigParser()
         parser.read(path.join(self.appdir,'config.ini'))
         colwidths = parser.get('ui','colwidths').split(',')
@@ -47,7 +35,6 @@ class LibraryApp(Gtk.Application):
         self.widgets['tree']        = self.builder.get_object('treeview2')
         self.widgets['filechooser'] = self.builder.get_object('filechooserdialog1')
         self.widgets['filechooser'].set_action(Gtk.FileChooserAction.SELECT_FOLDER)
-        #mnuquit = self.builder.get_object('mnuquit')
  
         self.modelfilter = self.liststore.filter_new()
         btnopen = self.builder.get_object('tbtnopen')        
@@ -57,7 +44,6 @@ class LibraryApp(Gtk.Application):
         
         #connect handlers
         btnopen.connect('clicked', self.showfilechooser)
-        #mnuquit.connect('activate', Gtk.main_quit)
         self.widgets['tree'].connect("row-activated", self.tree_dblclick)
         self.widgets['window'].connect('destroy', Gtk.main_quit)
         self.widgets['searchbox'].connect("changed", self.do_filter_all)
@@ -127,45 +113,19 @@ class LibraryApp(Gtk.Application):
 
     def showfilechooser(self, obj):
         response = self.widgets['filechooser'].run()
+        recursive = self.builder.get_object('checkbutton2').get_active()
         self.widgets['filechooser'].hide()
-        fpath = self.widgets['filechooser'].get_filename()
         pathlist = None
         if response == 1: 
-            #self.findfiles(fpath)
-            th = self.scanfiles(self, fpath)
+            fpath = self.widgets['filechooser'].get_filename()
+            th = FT(scanFiles, self.appdir, fpath, self.liststore, recursive)
             th.daemon = True
             th.start()
 
     def tree_dblclick(self, obj, treepath, second):
-        #filename = self.liststore.get_value(self.liststore.get_iter(treepath), 4)
         (model, path) = self.widgets['tree'].get_selection().get_selected_rows()
         filename = model.get_value(model.get_iter(path), 4)
         call(['gnome-open', filename])
-
-    def findfiles(self, fpath):
-        #self.liststore.clear()
-        self.path = fpath
-        conn = lite.connect(path.join(self.appdir, 'biblioteca.db'))
-        files = [f  for f in listdir(fpath) if f.endswith('.pdf') ]
-        for f in files:
-            print "opening " + f
-            filepath = path.join(fpath, f)
-            sizeinbytes = path.getsize(filepath)
-            filesize = size(sizeinbytes)
-            #pdf = PyPDF2.PdfFileReader(open(filepath, 'rb'))
-            info = getFileInfo(filepath)
-            #templist = [pdf.documentInfo.title, f, pdf.documentInfo.author, pdf.numPages, filepath, filesize, None, None, 0, sizeinbytes]
-            templist = [info.get('Title',''), f, info.get('Author',''), int(info['Pages']), filepath, filesize, None, None, 0, sizeinbytes]
-            #print templist
-            templist = [unicode(a) if type(a)=='str' else a for a in templist]
-            self.liststore.append(templist)
-            cmd = unicode("insert into catalog values('{0}','{1}','{2}',{3},'{4}','{5}','{6}','{7}',{8}, {9})") .format(*tuple(i if i != None else '' for i in templist))
-            try:
-                cur = conn.execute(cmd)
-            except lite.Error, e:
-                print e.message
-        conn.commit()
-
 
 def main():
     app = LibraryApp()
