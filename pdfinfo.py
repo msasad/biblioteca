@@ -4,7 +4,7 @@ from os import listdir, path
 
 def toDict(string):
     temp = string.split(':')
-    print string
+    #print string
     return (temp[0],temp[1].strip())
 
 def getFileInfo(filename):
