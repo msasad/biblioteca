@@ -10,11 +10,12 @@ class FT(threading.Thread):
         self._target = target
         self._args = args
         threading.Thread.__init__(self)
-    
+
     def run(self):
         self._target(*self._args)
 
-def scanFiles(dbpath, pathtoscan, liststore, recursive = False):
+
+def scanFiles(dbpath, pathtoscan, liststore, recursive=False):
     print "Using db at :" + dbpath
     conn = lite.connect(path.join(dbpath, 'biblioteca.db'))
     files = dict()
@@ -23,7 +24,7 @@ def scanFiles(dbpath, pathtoscan, liststore, recursive = False):
         for entry in dirtree:
             files[entry[0]] = [i for i in entry[2] if i.endswith('.pdf')]
     else:
-        files[pathtoscan] = [f for f in listdir(pathtoscan) if f.endswith('.pdf') ]
+        files[pathtoscan] = [f for f in listdir(pathtoscan) if f.endswith('.pdf')]
     print files
     for fpath in files.keys():
         for f in files[fpath]:
@@ -32,7 +33,7 @@ def scanFiles(dbpath, pathtoscan, liststore, recursive = False):
             sizeinbytes = path.getsize(filepath)
             filesize = size(sizeinbytes)
             info = getFileInfo(filepath)
-            templist = [info.get('Title',''), f, info.get('Author',''), int(info['Pages']), filepath, filesize, None, None, 0, sizeinbytes]
+            templist = [info.get('Title', ''), f, info.get('Author', ''), int(info['Pages']), filepath, filesize, None, None, 0, sizeinbytes]
             #templist = [unicode(info.get('Title','')), unicode(f), unicode(info.get('Author','')), int(info['Pages']), unicode(filepath), filesize, None, None, 0, sizeinbytes]
             #templist = [unicode(a) if type(a)=='str' else a for a in templist]
             #print templist
@@ -43,4 +44,3 @@ def scanFiles(dbpath, pathtoscan, liststore, recursive = False):
             except lite.Error, e:
                 print "Sqlite Error" + e.message
         conn.commit()
-

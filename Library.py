@@ -6,10 +6,11 @@ from subprocess import call
 from gi.repository import Gtk
 from os import listdir, path, system, getcwd, getenv
 from gi.repository import Gdk
-#import PyPDF2
+# import PyPDF2
 import sqlite3 as lite
 import threading
 from ConfigParser import SafeConfigParser
+
 
 class LibraryApp(Gtk.Application):
     def __init__(self):
@@ -26,38 +27,39 @@ class LibraryApp(Gtk.Application):
             threading.Thread.__init__(self)
             self.a = app
             self.fpath = fpath
+
         def run(self):
             self.a.findfiles(self.fpath)
 
     def initUI(self):
         self.builder = Gtk.Builder()
         self.builder.add_from_file(path.join(self.appdir, 'Biblioteca.ui'))
-        #self.set_menubar(None)
+        # self.set_menubar(None)
         parser = SafeConfigParser()
-        parser.read(path.join(self.appdir,'config.ini'))
-        colwidths = parser.get('ui','colwidths').split(',')
+        parser.read(path.join(self.appdir, 'config.ini'))
+        colwidths = parser.get('ui', 'colwidths').split(',')
         col = self.builder.get_object('treeviewcolumn1')
         col.set_fixed_width(int(colwidths[0]))
         col = self.builder.get_object('treeviewcolumn2')
         col.set_fixed_width(int(colwidths[1]))
         self.widgets = dict()
-        self.widgets['window']      = self.builder.get_object('applicationwindow1')
-        self.widgets['searchbox']   = self.builder.get_object('entry3')
-        self.liststore              = self.builder.get_object('liststore1')
-        self.widgets['tree']        = self.builder.get_object('treeview2')
+        self.widgets['window'] = self.builder.get_object('applicationwindow1')
+        self.widgets['searchbox'] = self.builder.get_object('entry3')
+        self.liststore = self.builder.get_object('liststore1')
+        self.widgets['tree'] = self.builder.get_object('treeview2')
         self.widgets['filechooser'] = self.builder.get_object('filechooserdialog1')
         self.widgets['filechooser'].set_action(Gtk.FileChooserAction.SELECT_FOLDER)
-        #mnuquit = self.builder.get_object('mnuquit')
- 
+        # mnuquit = self.builder.get_object('mnuquit')
+
         self.modelfilter = self.liststore.filter_new()
-        btnopen = self.builder.get_object('tbtnopen')        
+        btnopen = self.builder.get_object('tbtnopen')
         self.modelsort = Gtk.TreeModelSort(self.modelfilter)
         self.modelfilter.set_visible_func(self.filter_all)
         self.widgets['tree'].set_model(self.modelsort)
-        
-        #connect handlers
+
+        # connect handlers
         btnopen.connect('clicked', self.showfilechooser)
-        #mnuquit.connect('activate', Gtk.main_quit)
+        # mnuquit.connect('activate', Gtk.main_quit)
         self.widgets['tree'].connect("row-activated", self.tree_dblclick)
         self.widgets['window'].connect('destroy', Gtk.main_quit)
         self.widgets['searchbox'].connect("changed", self.do_filter_all)
@@ -70,9 +72,10 @@ class LibraryApp(Gtk.Application):
             entry.set_text('')
 
     def filter_all(self, model, eter, data):
-        collist = [(0,), (7,), (2,), (1,), (0,1,2,4,6,7)]
+        collist = [(0, ), (7, ), (2, ), (1, ), (0, 1, 2, 4, 6, 7)]
         row = model.get(eter, *collist[self.modstate])
-        data = self.widgets['searchbox'].get_text().lower() if self.widgets['searchbox'].get_text() != None else ''
+        data = self.widgets['searchbox'].get_text().lower() if \
+            self.widgets['searchbox'].get_text() is not None else ''
         for a in row:
             if a is not None and data in a.lower():
                 return True
@@ -124,13 +127,12 @@ class LibraryApp(Gtk.Application):
                     for i in self.data:
                         self.liststore.append(list(i))
 
-
     def showfilechooser(self, obj):
         response = self.widgets['filechooser'].run()
         self.widgets['filechooser'].hide()
         fpath = self.widgets['filechooser'].get_filename()
         pathlist = None
-        if response == 1: 
+        if response == 1:
             #self.findfiles(fpath)
             th = self.scanfiles(self, fpath)
             th.daemon = True
@@ -146,7 +148,7 @@ class LibraryApp(Gtk.Application):
         #self.liststore.clear()
         self.path = fpath
         conn = lite.connect(path.join(self.appdir, 'biblioteca.db'))
-        files = [f  for f in listdir(fpath) if f.endswith('.pdf') ]
+        files = [f  for f in listdir(fpath) if f.endswith('.pdf')]
         for f in files:
             print "opening " + f
             filepath = path.join(fpath, f)
@@ -155,9 +157,9 @@ class LibraryApp(Gtk.Application):
             #pdf = PyPDF2.PdfFileReader(open(filepath, 'rb'))
             info = getFileInfo(filepath)
             #templist = [pdf.documentInfo.title, f, pdf.documentInfo.author, pdf.numPages, filepath, filesize, None, None, 0, sizeinbytes]
-            templist = [info.get('Title',''), f, info.get('Author',''), int(info['Pages']), filepath, filesize, None, None, 0, sizeinbytes]
+            templist = [info.get('Title', ''), f, info.get('Author', ''), int(info['Pages']), filepath, filesize, None, None, 0, sizeinbytes]
             #print templist
-            templist = [unicode(a) if type(a)=='str' else a for a in templist]
+            templist = [unicode(a) if type(a) == 'str' else a for a in templist]
             self.liststore.append(templist)
             cmd = unicode("insert into catalog values('{0}','{1}','{2}',{3},'{4}','{5}','{6}','{7}',{8}, {9})") .format(*tuple(i if i != None else '' for i in templist))
             try:

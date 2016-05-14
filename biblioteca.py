@@ -8,6 +8,7 @@ import sqlite3 as lite
 import threading
 from ConfigParser import SafeConfigParser
 
+
 class LibraryApp(Gtk.Application):
     def __init__(self):
         Gtk.Application.__init__(self)
@@ -22,27 +23,27 @@ class LibraryApp(Gtk.Application):
         self.builder = Gtk.Builder()
         self.builder.add_from_file(path.join(self.appdir, 'Biblioteca.ui'))
         parser = SafeConfigParser()
-        parser.read(path.join(self.appdir,'config.ini'))
-        colwidths = parser.get('ui','colwidths').split(',')
+        parser.read(path.join(self.appdir, 'config.ini'))
+        colwidths = parser.get('ui', 'colwidths').split(',')
         col = self.builder.get_object('treeviewcolumn1')
         col.set_fixed_width(int(colwidths[0]))
         col = self.builder.get_object('treeviewcolumn2')
         col.set_fixed_width(int(colwidths[1]))
         self.widgets = dict()
-        self.widgets['window']      = self.builder.get_object('applicationwindow1')
-        self.widgets['searchbox']   = self.builder.get_object('entry3')
-        self.liststore              = self.builder.get_object('liststore1')
-        self.widgets['tree']        = self.builder.get_object('treeview2')
-        self.widgets['filechooser'] = self.builder.get_object('filechooserdialog1')
-        self.widgets['filechooser'].set_action(Gtk.FileChooserAction.SELECT_FOLDER)
- 
+        self.widgets['window'] = self.builder.get_object('applicationwindow1')
+        self.widgets['searchbox'] = self.builder.get_object('entry3')
+        self.liststore = self.builder.get_object('liststore1')
+        self.widgets['tree'] = self.builder.get_object('treeview2')
+        self.widgets['filechooser'] = self.builder.\
+            get_object('filechooserdialog1')
+
         self.modelfilter = self.liststore.filter_new()
-        btnopen = self.builder.get_object('tbtnopen')        
+        btnopen = self.builder.get_object('tbtnopen')
         self.modelsort = Gtk.TreeModelSort(self.modelfilter)
         self.modelfilter.set_visible_func(self.filter_all)
         self.widgets['tree'].set_model(self.modelsort)
-        
-        #connect handlers
+
+        # connect handlers
         btnopen.connect('clicked', self.showfilechooser)
         self.widgets['tree'].connect("row-activated", self.tree_dblclick)
         self.widgets['window'].connect('destroy', Gtk.main_quit)
@@ -56,9 +57,10 @@ class LibraryApp(Gtk.Application):
             entry.set_text('')
 
     def filter_all(self, model, eter, data):
-        collist = [(0,), (7,), (2,), (1,), (0,1,2,4,6,7)]
+        collist = [(0,), (7,), (2,), (1,), (0, 1, 2, 4, 6, 7)]
         row = model.get(eter, *collist[self.modstate])
-        data = self.widgets['searchbox'].get_text().lower() if self.widgets['searchbox'].get_text() != None else ''
+        data = self.widgets['searchbox'].get_text().lower() if \
+            self.widgets['searchbox'].get_text() is not None else ''
         for a in row:
             if a is not None and data in a.lower():
                 return True
@@ -110,7 +112,6 @@ class LibraryApp(Gtk.Application):
                     for i in self.data:
                         self.liststore.append(list(i))
 
-
     def showfilechooser(self, obj):
         response = self.widgets['filechooser'].run()
         recursive = self.builder.get_object('checkbutton2').get_active()
@@ -123,7 +124,8 @@ class LibraryApp(Gtk.Application):
             th.start()
 
     def tree_dblclick(self, obj, treepath, second):
-        (model, path) = self.widgets['tree'].get_selection().get_selected_rows()
+        (model, path) = self.widgets['tree'].\
+            get_selection().get_selected_rows()
         filename = model.get_value(model.get_iter(path), 4)
         call(['gnome-open', filename])
 
