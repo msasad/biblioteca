@@ -137,6 +137,7 @@
               <object class="GtkToolButton" id="tbtnopen">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">Import a directory (Ctrl + O)</property>
                 <property name="label" translatable="yes">Open</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-open</property>
@@ -163,7 +164,7 @@
               <object class="GtkToolButton" id="tbtnrefresh">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="tooltip_text" translatable="yes">Refresh File List</property>
+                <property name="tooltip_text" translatable="yes">Refresh File List (F5)</property>
                 <property name="label" translatable="yes">toolbutton1</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-refresh</property>
